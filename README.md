@@ -16,6 +16,7 @@ Sistema completo de ingeniería de datos analíticos construido sobre los regist
 ## Equipo
 
 | Integrante | Carné |
+| ** | **|
 | Santiago Alexánder Pocón Buch | 7590-12- |
 | Valeria Melissa Guzmán Estrada | 7590-23-4125 |
 | Luz Miriam Gil Aguilar | 7590-23- | 

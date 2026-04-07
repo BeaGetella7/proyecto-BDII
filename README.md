@@ -1,4 +1,4 @@
-<img width="585" height="185" alt="image" src="https://github.com/user-attachments/assets/f9d840ad-7765-4f3a-89c8-b4e3e4188b37" /># Proyecto Final — Data Warehouse NYC Taxi Trip Records
+# Proyecto Final — Data Warehouse NYC Taxi Trip Records
 **Base de Datos II — Universidad Mariano Gálvez de Guatemala**
 
 ---
@@ -12,16 +12,15 @@ Sistema completo de ingeniería de datos analíticos construido sobre los regist
 **Volumen estimado:** ~41 millones de registros en `fact_viajes` (superando el mínimo de 5M requerido)
 
 ---
+
 ## Equipo
 
-| Integrante                          | Carné        |
-|-------------------------------------|--------------|
-| Santiago Aléxander Pocón Buch       | 7590-12-6162 |
-| Valeria Melissa Guzmán Estrada      | 7590-23-4125 |
-| Luz Miriam Gil Aguilar              | 7590-23-2193 |
-| Cindy Beatriz Pú Getellá            | 7590-17-14351|
-
-
+| Integrante | Carné |
+|---|---|
+| Santiago Alexánder Pocón Buch | 7590-12-6162 |
+| Valeria Melissa Guzmán Estrada | 7590-23-4125 |
+| Luz Miriam Gil Aguilar | 7590-23-2193 |
+| Cindy Beatriz Pú Getellá | 7590-17-14351 |
 
 ---
 

@@ -1,0 +1,18 @@
+# Dependencias del proyecto — NYC Taxi Data Warehouse
+# Base de Datos II — Universidad Mariano Gálvez de Guatemala
+# Instalar con: pip install -r requirements.txt
+
+# Manipulación y análisis de datos
+pandas==2.2.2
+
+# Lectura de archivos Parquet (dataset NYC Taxi)
+pyarrow==16.0.0
+
+# Conexión a PostgreSQL desde Python
+psycopg2-binary==2.9.9
+
+# Manejo de variables de entorno (.env)
+python-dotenv==1.0.1
+
+# Descarga automatizada de archivos (extract.py)
+requests==2.31.0

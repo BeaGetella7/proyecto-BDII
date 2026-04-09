@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: bdii_postgres
+    environment:
+      POSTGRES_DB: datawarehouse
+      POSTGRES_USER: bdii_user
+      POSTGRES_PASSWORD: bdii_password123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    command: >
+      postgres
+        -c shared_buffers=4GB
+        -c work_mem=256MB
+        -c maintenance_work_mem=1GB
+        -c effective_cache_size=10GB
+        -c max_wal_size=4GB
+        -c checkpoint_completion_target=0.9
+        -c enable_partitionwise_aggregate=on
+        -c enable_partitionwise_join=on
+    shm_size: '4gb'
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local

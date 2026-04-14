@@ -8,7 +8,7 @@
 Sistema completo de ingeniería de datos analíticos construido sobre los registros de viajes en taxi amarillo de Nueva York (NYC Yellow Taxi Trip Records — TLC). El proyecto implementa un pipeline ETL en Python, un Data Warehouse con esquema estrella en PostgreSQL 17, y un dashboard analítico conectado directamente a la base de datos.
 
 **Dataset fuente:** [NYC TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)  
-**Período cubierto:** Año 2024 completo (12 archivos Parquet mensuales)  
+**Período cubierto:** Año 2025 completo (12 archivos Parquet mensuales)  
 **Volumen estimado:** ~41 millones de registros en `fact_viajes` (superando el mínimo de 5M requerido)
 
 ---

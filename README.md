@@ -197,3 +197,23 @@ Ver [`docs/technical-decisions.md`](docs/technical-decisions.md) para la justifi
 - **Volumen:** ~3.47M registros/mes → ~41M registros/año
 
 Ver perfil detallado en [`docs/dataset_profile.md`](docs/dataset_profile.md).
+
+## Preguntas para el Catedrático
+
+Durante el desarrollo de las semanas 1 y 2 surgieron las siguientes dudas técnicas que el equipo quiere clarificar antes de avanzar a la implementación del ETL:
+
+### Sobre el Modelo Dimensional
+
+1. **¿Se acepta separar `dim_pago` en dos dimensiones independientes (`dim_metodo_pago` y `dim_tarifa_pago`)?**  
+   El modelo actual separa el método de pago (tarjeta, efectivo, etc.) de la tarifa aplicada (estándar, JFK, Newark, etc.) porque son conceptos independientes — un viaje puede tener cualquier combinación de ambos. ¿Este diseño sigue siendo esquema estrella o se considera snowflake?
+
+2. **Para la dimensión de tiempo, ¿`dia_semana` debe almacenarse como texto (`Wednesday`) o como número (1–7)?**  
+   El modelo actual usa `VARCHAR(10)` con el nombre del día. Si el dashboard necesita ordenar por día de semana, un número puede ser más eficiente para el ORDER BY.
+
+3. **¿El campo `geometry` del dataset secundario de zonas debe incluirse en alguna tabla del Data Warehouse o se descarta completamente?**  
+   Actualmente el diseño lo excluye del modelo relacional. ¿Podría ser relevante para alguna visualización en el dashboard?
+
+### Sobre el ETL
+
+4. **Para la carga por lotes con `COPY` de PostgreSQL, ¿cuál es el tamaño de lote recomendado para un dataset de ~48.7M registros?**  
+   El equipo planea procesar en lotes mensuales (un archivo Parquet por mes), pero no está seguro si conviene subdividir más dentro de cada mes.

@@ -60,3 +60,19 @@ Fuente: https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page
 |7|geometry|Objeto geoespacial que define el polígono (la forma y límites geográficos) de la zona en el mapa. Este campo permite visualizar y hacer análisis espacial.|object/Geometry|b'\x01\x03\x00\x00\x00\x01\x00\x00\x00\xe8\x00... <br>b'\x01\x06\x00\x00\x00!\x00\x00\x00\x01\x03\x0...|
 
 Fuente: https://source.coop/cholmes/nyc-taxi-zones
+
+### Registros y memoria dataset
+* El promedio de cantidad de registros por mes es de: 4,060,217  
+* El total de registros anual es de: 48,722,602  
+* El promedio de memoria utilizado por mes es de:  711.71 MB  
+* El total de memoria utilizado por mes es de: 8.34 GB
+
+### Problemas de calidad dataset
+
+* Rango de fechas correctas en las columnas `tpep_pickup_datetime` y `tpep_dropoff_datetime`
+* La columna debe ser número entero `passenger_count`
+* Valores NaN y None en las columnas y filas
+* Rango de valores negativo en campos numéricos
+* Limpieza de valores duplicados
+* Extracción y carga de información por medio de lotes
+* Cración de stagin local para la transformación de la información y segmentación

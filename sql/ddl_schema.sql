@@ -177,37 +177,8 @@ CREATE INDEX IF NOT EXISTS idx_fact_viajes_proveedor
 CREATE INDEX IF NOT EXISTS idx_fact_viajes_tiempo
     ON fact_viajes (tiempo_id);
 
--- ============================================================
--- DATOS DE REFERENCIA (catálogos)
--- ============================================================
-
--- Poblar dim_metodo_pago con los códigos conocidos
-INSERT INTO dim_metodo_pago (payment_type, payment_descripcion) VALUES
-    ('0', 'Tarifa flexible'),
-    ('1', 'Tarjeta de credito'),
-    ('2', 'Efectivo'),
-    ('3', 'Sin cargo'),
-    ('4', 'Disputa'),
-    ('5', 'Desconocido'),
-    ('6', 'Viaje anulado');
-
--- Poblar dim_tarifa_pago con los códigos conocidos
-INSERT INTO dim_tarifa_pago (ratecode_descripcion) VALUES
-    ('Tarifa estandar'),
-    ('JFK: tarifa fija'),
-    ('Newark: tarifa especial'),
-    ('Nassau o Westchester'),
-    ('Tarifa negociada'),
-    ('Viaje en grupo'),
-    ('Desconocido');
-
--- Poblar dim_proveedor con los proveedores conocidos
-INSERT INTO dim_proveedor (vendor_id, vendor_nombre, store_and_fwd_flag, tipo_almacenamiento) VALUES
-    (1, 'Creative Mobile Technologies LLC', 'Y', 'Viaje almacenado y reenviado'),
-    (1, 'Creative Mobile Technologies LLC', 'N', 'Envio directo en tiempo real'),
-    (2, 'Curb Mobility LLC',               'Y', 'Viaje almacenado y reenviado'),
-    (2, 'Curb Mobility LLC',               'N', 'Envio directo en tiempo real'),
-    (6, 'Myle Technologies Inc',           'Y', 'Viaje almacenado y reenviado'),
-    (6, 'Myle Technologies Inc',           'N', 'Envio directo en tiempo real'),
-    (7, 'Helix',                           'Y', 'Viaje almacenado y reenviado'),
-    (7, 'Helix',                           'N', 'Envio directo en tiempo real');
+-- Índice compuesto en pickup_datetime y zona_pickup_id
+-- Razón: acelera consultas que filtran por fecha Y zona al mismo tiempo
+-- Ejemplo: viajes de Manhattan en hora pico, ingresos por zona por mes
+CREATE INDEX IF NOT EXISTS idx_fact_viajes_pickup_zona
+    ON fact_viajes (pickup_datetime, zona_pickup_id);

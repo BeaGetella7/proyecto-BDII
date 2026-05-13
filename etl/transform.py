@@ -180,8 +180,8 @@ def construir_dimensiones():
             "Tarifa negociada", "Viaje en grupo", "Desconocido"
         ]
     })
-   # dim_tarifa_pago.insert(0, "id_tarifa", range(1, len(dim_tarifa_pago) + 1))
-    #print(f"[OK] dim_tarifa_pago: {len(dim_tarifa_pago):,} filas")
+    dim_tarifa_pago.insert(0, "id_tarifa", range(1, len(dim_tarifa_pago) + 1))
+    print(f"[OK] dim_tarifa_pago: {len(dim_tarifa_pago):,} filas")
 
     return dim_tiempo, dim_zona, dim_proveedor, dim_metodo_pago, dim_tarifa_pago
 

@@ -7,10 +7,10 @@ from pathlib import Path
 # ─────────────────────────────────────────────────────────────────────────────
 # CONFIGURACIÓN
 # ─────────────────────────────────────────────────────────────────────────────
-CONTAINER   = "bdii_postgres"
-DB_NAME     = "datawarehouse"
-DB_USER     = "bdii_user"
-STAGING     = Path("staging")
+CONTAINER    = "bdii_postgres"
+DB_NAME      = "datawarehouse"
+DB_USER      = "bdii_user"
+STAGING      = Path("staging")
 TAMANIO_LOTE = 100_000
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -28,21 +28,22 @@ def ejecutar_sql(sql):
         raise Exception(f"Error SQL: {resultado.stderr}")
     return resultado.stdout
 
-# Limpiar tablas antes de cargar
-print("\n[INFO] Limpiando tablas...")
-ejecutar_sql("TRUNCATE TABLE fact_viajes CASCADE;")
-ejecutar_sql("TRUNCATE TABLE dim_tiempo, dim_zona, dim_proveedor, dim_metodo_pago, dim_tarifa_pago CASCADE;")
-print("[OK] Tablas limpias.")
-
 def verificar_conexion():
     """Verifica que Docker y PostgreSQL estén corriendo."""
     try:
-        resultado = ejecutar_sql("SELECT 1;")
+        ejecutar_sql("SELECT 1;")
         print("[OK] Conexión a PostgreSQL establecida via Docker.")
     except Exception as e:
         print(f"[ERROR] No se pudo conectar: {e}")
         print("  Verifica que Docker esté corriendo: docker compose up -d")
         raise
+
+def limpiar_tablas():
+    """Limpia todas las tablas antes de cargar."""
+    print("\n[INFO] Limpiando tablas...")
+    ejecutar_sql("TRUNCATE TABLE fact_viajes CASCADE;")
+    ejecutar_sql("TRUNCATE TABLE dim_tiempo, dim_zona, dim_proveedor, dim_metodo_pago, dim_tarifa_pago CASCADE;")
+    print("[OK] Tablas limpias.")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CARGA CON COPY VIA DOCKER
@@ -121,17 +122,20 @@ def cargar_fact_viajes():
     for archivo in archivos:
         print(f"\n[INFO] Cargando {archivo.name}...")
         df = pd.read_parquet(archivo, columns=columnas)
-        
+
+        # Renombrar ratecode_id a id_tarifa para que coincida con el DDL
+        df = df.rename(columns={"ratecode_id": "id_tarifa"})
+
         # Convertir FK a entero
         cols_entero = [
             "tiempo_id", "zona_pickup_id", "zona_dropoff_id",
-            "id_metodo_pago", "proveedor_id", "ratecode_id", "passenger_count"
+            "id_metodo_pago", "proveedor_id", "id_tarifa",
+            "passenger_count"
         ]
         for col in cols_entero:
             if col in df.columns:
                 df[col] = df[col].fillna(0).astype(int)
-        
-       
+
         total_filas = len(df)
         total_lotes = (total_filas // TAMANIO_LOTE) + 1
 
@@ -181,6 +185,7 @@ if __name__ == "__main__":
     print("=" * 60)
 
     verificar_conexion()
+    limpiar_tablas()
 
     # Cargar dimensiones (orden importa por las FK)
     print("\n[FASE 1] Cargando dimensiones...")
@@ -200,8 +205,8 @@ if __name__ == "__main__":
         "id_metodo_pago", "payment_type", "payment_descripcion"
     ])
     cargar_dimension("dim_tarifa_pago", "dim_tarifa_pago", [
-    "ratecode_id", "ratecode_descripcion"
-])
+    "id_tarifa", "ratecode_id", "ratecode_descripcion"
+    ])
 
     # Cargar fact_viajes mes por mes
     print("\n[FASE 2] Cargando fact_viajes (mes por mes)...")

@@ -6,8 +6,8 @@ from pathlib import Path
 # Configuracion para descargar a staging ────────────────────────────────────────────────
 BASE_URL = "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2025-{mes:02d}.parquet"
 BASE_URL_ZONE = "https://data.source.coop/cholmes/nyc-taxi-zones/taxi_zones_4326.parquet"
-# MESES = list(range(1,13))
-MESES = [1]
+MESES = list(range(1,13))
+# MESES = [1]
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 OUTPUT = BASE_DIR/"staging"

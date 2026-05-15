@@ -124,12 +124,12 @@ def cargar_fact_viajes():
         df = pd.read_parquet(archivo, columns=columnas)
 
         # Renombrar ratecode_id a id_tarifa para que coincida con el DDL
-        df = df.rename(columns={"ratecode_id": "id_tarifa"})
+        # df = df.rename(columns={"ratecode_id": "id_tarifa"})
 
         # Convertir FK a entero
         cols_entero = [
             "tiempo_id", "zona_pickup_id", "zona_dropoff_id",
-            "id_metodo_pago", "proveedor_id", "id_tarifa",
+            "id_metodo_pago", "proveedor_id", "ratecode_id",
             "passenger_count"
         ]
         for col in cols_entero:
@@ -205,8 +205,8 @@ if __name__ == "__main__":
         "id_metodo_pago", "payment_type", "payment_descripcion"
     ])
     cargar_dimension("dim_tarifa_pago", "dim_tarifa_pago", [
-    "id_tarifa", "ratecode_id", "ratecode_descripcion"
-    ])
+    "ratecode_id", "ratecode_descripcion"
+])
 
     # Cargar fact_viajes mes por mes
     print("\n[FASE 2] Cargando fact_viajes (mes por mes)...")

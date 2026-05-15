@@ -9,7 +9,7 @@ Sistema completo de ingeniería de datos analíticos construido sobre los regist
 
 **Dataset fuente:** [NYC TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)  
 **Período cubierto:** Año 2025 completo (12 archivos Parquet mensuales)  
-**Volumen estimado:** ~41 millones de registros en `fact_viajes` (superando el mínimo de 5M requerido)
+**Volumen:** 35,721,060 registros en `fact_viajes`
 
 ---
 
@@ -26,7 +26,7 @@ Sistema completo de ingeniería de datos analíticos construido sobre los regist
 
 ## Preguntas de Negocio del Dashboard
 
-El dashboard responde las siguientes 4 preguntas analíticas, todas respondibles con el dataset elegido:
+El dashboard responde las siguientes 4 preguntas analíticas:
 
 ### 1. ¿Cuál es la tendencia mensual de ingresos totales generados por los viajes en taxi durante el año?
 Permite identificar estacionalidad en los ingresos, picos por temporada (verano, fiestas) y meses con menor actividad. Usa `total_amount` agrupado por mes desde `dim_tiempo`.
@@ -35,10 +35,10 @@ Permite identificar estacionalidad en los ingresos, picos por temporada (verano,
 Identifica las zonas más demandadas de Nueva York (ej. aeropuertos, Midtown) y compara si las zonas con más viajes también generan las tarifas más altas. Combina `dim_zona` con `fact_viajes`.
 
 ### 3. ¿Cómo se distribuye el uso de medios de pago (tarjeta vs. efectivo) a lo largo de la semana?
-Revela patrones de comportamiento del pasajero: si los fines de semana se paga más en efectivo, si los días laborales predomina la tarjeta, etc. Combina `dim_pago` con `dim_tiempo`.
+Revela patrones de comportamiento del pasajero. Combina `dim_metodo_pago` con `dim_tiempo`.
 
-### 4. ¿Qué proveedor de taxi (VendorID) genera mayor ingreso promedio por viaje y cuál tiene mayor proporción de viajes almacenados (store & forward)?
-Compara el rendimiento operativo entre proveedores (Creative Mobile Technologies vs. Curb Mobility) e identifica zonas o rutas con problemas de conectividad. Usa `dim_taxi` y `fact_viajes`.
+### 4. ¿Qué proveedor de taxi genera mayor ingreso promedio por viaje y cuál tiene mayor proporción de viajes almacenados?
+Compara el rendimiento operativo entre proveedores. Usa `dim_proveedor` y `fact_viajes`.
 
 ---
 
@@ -54,10 +54,10 @@ Fuente (Parquet)
  etl/transform.py     ← Limpieza, construcción de dimensiones y hechos
       │
       ▼
-  /staging/           ← Archivos Parquet/CSV transformados
+  /staging/           ← Archivos Parquet generados por transform.py
       │
       ▼
-  etl/load.py         ← Carga por lotes a PostgreSQL (COPY)
+  etl/load.py         ← Ejecuta el DDL, limpia tablas y carga datos a PostgreSQL via Docker (COPY)
       │
       ▼
  PostgreSQL 17        ← Data Warehouse (esquema estrella + particiones + índices)
@@ -75,8 +75,8 @@ proyecto-bdii/
 ├── etl/
 │   ├── extract.py          # Descarga automatizada del dataset
 │   ├── transform.py        # Limpieza y construcción de dimensiones/hechos
-│   └── load.py             # Carga por lotes a PostgreSQL
-├── staging/                # Archivos Parquet/CSV generados por transform.py
+│   └── load.py             # Ejecuta DDL y carga por lotes a PostgreSQL
+├── staging/                # Archivos Parquet generados por transform.py
 ├── sql/
 │   ├── ddl_schema.sql      # CREATE TABLE, particiones e índices
 │   └── queries_analyze.sql # Consultas usadas en EXPLAIN ANALYZE
@@ -84,8 +84,7 @@ proyecto-bdii/
 │   ├── dataset_profile.md  # Perfil del dataset: columnas, tipos, calidad
 │   ├── model_draft.md      # Borrador del modelo dimensional
 │   ├── model_diagram.png   # Diagrama dimensional (estrella)
-│   ├── technical-decisions.md  # Decisiones técnicas justificadas
-│   └── partition_notes.md  # Notas de particionamiento PostgreSQL 17
+│   └── technical-decisions.md  # Decisiones técnicas justificadas
 ├── requirements.txt
 └── README.md
 ```
@@ -94,17 +93,16 @@ proyecto-bdii/
 
 ## Modelo Dimensional
 
-Esquema estrella con una tabla de hechos central y cuatro dimensiones:
+Esquema estrella con una tabla de hechos central y cinco dimensiones:
 
 | Tabla | Tipo | Descripción |
 |---|---|---|
-| `fact_viajes` | Hechos | Un registro por viaje (~41M filas) |
+| `fact_viajes` | Hechos | Un registro por viaje (35.7M filas) |
 | `dim_tiempo` | Dimensión | Fecha, día, mes, trimestre, año, día de semana |
 | `dim_zona` | Dimensión | Zonas TLC de NYC (role-playing: pickup y dropoff) |
-| `dim_pago` | Dimensión | Tipo de pago y código de tarifa |
-| `dim_taxi` | Dimensión | Proveedor del servicio y tipo de almacenamiento |
-
-Ver detalles completos en [`docs/model_draft.md`](docs/model_draft.md) y diagrama en [`docs/model_diagram.png`](docs/model_diagram.png).
+| `dim_metodo_pago` | Dimensión | Tipo de pago (tarjeta, efectivo, etc.) |
+| `dim_tarifa_pago` | Dimensión | Código de tarifa (estándar, JFK, Newark, etc.) |
+| `dim_proveedor` | Dimensión | Proveedor del servicio y tipo de almacenamiento |
 
 ---
 
@@ -115,56 +113,145 @@ Ver detalles completos en [`docs/model_draft.md`](docs/model_draft.md) y diagram
 - Python 3.9 o superior
 - Git
 
+---
+
 ### 1. Clonar el repositorio
 
-```bash
-git clone https://github.com/<tu-usuario>/proyecto-bdii.git
-cd proyecto-bdii
+Crear una carpeta donde se quiera descargar el proyecto, por ejemplo `C:\Proyectos`. Abrir PowerShell dentro de esa carpeta y ejecutar:
+
+```powershell
+git clone https://github.com/BeaGetella7/proyecto-BDII.git
 ```
+
+Esto crea una carpeta llamada `proyecto-BDII`. Entrar a ella:
+
+```powershell
+cd proyecto-BDII
+```
+
+> Todos los comandos siguientes deben ejecutarse desde dentro de la carpeta `proyecto-BDII`. Verificar que la terminal muestre la ruta correcta antes de continuar.
+
+---
 
 ### 2. Instalar dependencias de Python
 
-```bash
-pip install -r requirements.txt
+Desde dentro de la carpeta `proyecto-BDII` ejecutar:
+
+```powershell
+pip install -r requirements.txt --only-binary=:all:
 ```
 
-### 3. Levantar PostgreSQL 17 con Docker
+Verificar que las dependencias quedaron instaladas correctamente:
 
-```bash
+```powershell
+pip show pandas pyarrow psycopg
+```
+
+Deben aparecer las tres librerías con sus versiones. Si alguna no aparece, el comando anterior no se ejecutó correctamente.
+
+---
+
+### 3. Levantar PostgreSQL con Docker
+
+Abrir Docker Desktop y esperar a que cargue completamente. Luego, desde dentro de la carpeta `proyecto-BDII`, ejecutar:
+
+```powershell
 docker compose up -d
 ```
 
 Verificar que el contenedor está corriendo:
 
-```bash
+```powershell
 docker ps
 ```
 
-Verificar conexión a PostgreSQL:
+Debe aparecer una línea con `bdii_postgres` y estado `Up`. Si no aparece, verificar que Docker Desktop esté abierto y volver a ejecutar `docker compose up -d`.
 
-```bash
-docker exec -it postgres_bdii psql -U bdii_user -d nyc_taxi_dw
-```
-
-**Credenciales por defecto (solo desarrollo local):**
+**Credenciales de la base de datos:**
 
 | Parámetro | Valor |
 |---|---|
 | Host | `localhost` |
 | Puerto | `5432` |
-| Base de datos | `nyc_taxi_dw` |
+| Base de datos | `datawarehouse` |
 | Usuario | `bdii_user` |
-| Contraseña | `bdii_pass` |
+| Contraseña | `bdii_password123` |
 
-### 4. Ejecutar el pipeline ETL completo
+---
 
-```bash
+### 4. Ejecutar el pipeline ETL
+
+Ejecutar los tres scripts en orden desde dentro de la carpeta `proyecto-BDII`:
+
+```powershell
 python etl/extract.py
+```
+
+```powershell
 python etl/transform.py
+```
+
+```powershell
 python etl/load.py
 ```
 
-> **Tiempo estimado de carga:** 25–40 minutos para 1 año completo (~41M registros) en una máquina local estándar usando `COPY` de PostgreSQL.
+> No ejecutar el siguiente script hasta que el anterior haya terminado completamente.
+
+> `load.py` se encarga de crear automáticamente todas las tablas, particiones e índices en PostgreSQL antes de cargar los datos. No es necesario ejecutar el DDL manualmente.
+
+| Script | Descripción | Tiempo estimado |
+|---|---|---|
+| `extract.py` | Descarga los 12 archivos Parquet de NYC TLC + tabla de zonas | 15–30 min |
+| `transform.py` | Limpia los datos y construye dimensiones y tabla de hechos | 10–20 min |
+| `load.py` | Ejecuta el DDL, limpia tablas y carga los datos a PostgreSQL via Docker usando COPY | 30–40 min |
+
+> **Tiempo total estimado:** entre 55 y 90 minutos para el año completo en una máquina local estándar. El tiempo real medido fue de 34.4 minutos solo en la carga.
+
+---
+
+### 5. Verificar la carga
+
+Al finalizar `load.py` se imprime el conteo de cada tabla automáticamente. También se puede verificar manualmente entrando a la base de datos:
+
+```powershell
+docker exec -it bdii_postgres psql -U bdii_user -d datawarehouse
+```
+
+Dentro de psql ejecutar:
+
+```sql
+SELECT COUNT(*) FROM fact_viajes;
+SELECT COUNT(*) FROM dim_tiempo;
+SELECT COUNT(*) FROM dim_zona;
+\q
+```
+
+`fact_viajes` debe tener aproximadamente 35,721,060 filas. El `\q` cierra la conexión.
+
+---
+
+## Si algo falla — limpiar y empezar de nuevo
+
+Si se necesita limpiar todo y empezar desde cero, ejecutar estos comandos en orden desde dentro de la carpeta `proyecto-BDII`:
+
+```powershell
+docker compose down -v
+```
+
+```powershell
+docker compose up -d
+```
+
+Luego volver al paso 4 y ejecutar el pipeline de nuevo. `load.py` se encarga de recrear el esquema automáticamente.
+
+Si ya se descargaron los archivos del extract y solo se necesita volver a transformar y cargar:
+
+```powershell
+del staging\dim_*.parquet
+del staging\fact_viajes_*.parquet
+python etl/transform.py
+python etl/load.py
+```
 
 ---
 
@@ -174,8 +261,9 @@ Ver [`requirements.txt`](requirements.txt) para la lista completa. Principales:
 
 - `pandas` — manipulación de datos
 - `pyarrow` — lectura de archivos Parquet
-- `psycopg2-binary` — conexión a PostgreSQL desde Python
-- `python-dotenv` — manejo de variables de entorno
+- `psycopg` — conexión a PostgreSQL desde Python (compatible con Python 3.13+)
+- `requests` — descarga automatizada de archivos
+- `tqdm` — barra de progreso durante la descarga
 
 ---
 
@@ -194,26 +282,4 @@ Ver [`docs/technical-decisions.md`](docs/technical-decisions.md) para la justifi
 - **Fuente principal:** [NYC TLC Yellow Taxi Trip Records](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)
 - **Fuente secundaria:** [NYC Taxi Zones](https://source.coop/cholmes/nyc-taxi-zones)
 - **Formato:** Parquet
-- **Volumen:** ~3.47M registros/mes → ~41M registros/año
-
-Ver perfil detallado en [`docs/dataset_profile.md`](docs/dataset_profile.md).
-
-## Preguntas para el Catedrático
-
-Durante el desarrollo de las semanas 1 y 2 surgieron las siguientes dudas técnicas que el equipo quiere clarificar antes de avanzar a la implementación del ETL:
-
-### Sobre el Modelo Dimensional
-
-1. **¿Se acepta separar `dim_pago` en dos dimensiones independientes (`dim_metodo_pago` y `dim_tarifa_pago`)?**  
-   El modelo actual separa el método de pago (tarjeta, efectivo, etc.) de la tarifa aplicada (estándar, JFK, Newark, etc.) porque son conceptos independientes — un viaje puede tener cualquier combinación de ambos. ¿Este diseño sigue siendo esquema estrella o se considera snowflake?
-
-2. **Para la dimensión de tiempo, ¿`dia_semana` debe almacenarse como texto (`Wednesday`) o como número (1–7)?**  
-   El modelo actual usa `VARCHAR(10)` con el nombre del día. Si el dashboard necesita ordenar por día de semana, un número puede ser más eficiente para el ORDER BY.
-
-3. **¿El campo `geometry` del dataset secundario de zonas debe incluirse en alguna tabla del Data Warehouse o se descarta completamente?**  
-   Actualmente el diseño lo excluye del modelo relacional. ¿Podría ser relevante para alguna visualización en el dashboard?
-
-### Sobre el ETL
-
-4. **Para la carga por lotes con `COPY` de PostgreSQL, ¿cuál es el tamaño de lote recomendado para un dataset de ~48.7M registros?**  
-   El equipo planea procesar en lotes mensuales (un archivo Parquet por mes), pero no está seguro si conviene subdividir más dentro de cada mes.
+- **Volumen:** ~3.47M registros/mes → 35.7M registros/año (después de limpieza)

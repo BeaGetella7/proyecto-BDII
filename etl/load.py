@@ -37,6 +37,39 @@ def verificar_conexion():
         print(f"[ERROR] No se pudo conectar: {e}")
         print("  Verifica que Docker esté corriendo: docker compose up -d")
         raise
+    
+
+
+
+def ejecutar_ddl():
+    """
+    Lee y ejecuta el DDL completo desde /sql/ddl_schema.sql.
+    Crea todas las tablas, particiones e índices si no existen.
+    """
+    ruta_ddl = Path("sql/ddl_schema.sql")
+
+    if not ruta_ddl.exists():
+        print(f"[ERROR] No se encontró {ruta_ddl}")
+        raise FileNotFoundError(f"Archivo DDL no encontrado: {ruta_ddl}")
+
+    print(f"\n[INFO] Ejecutando DDL desde {ruta_ddl}...")
+
+    with open(ruta_ddl, "r", encoding="utf-8") as f:
+        ddl = f.read()
+
+    resultado = subprocess.run(
+        ["docker", "exec", "-i", CONTAINER,
+         "psql", "-U", DB_USER, "-d", DB_NAME],
+        input=ddl.encode("utf-8"),
+        capture_output=True
+    )
+
+    if resultado.returncode != 0:
+        raise Exception(f"Error ejecutando DDL: {resultado.stderr.decode()}")
+
+    print("[OK] DDL ejecutado correctamente — tablas, particiones e índices listos.")
+
+
 
 def limpiar_tablas():
     """Limpia todas las tablas antes de cargar."""
@@ -124,12 +157,12 @@ def cargar_fact_viajes():
         df = pd.read_parquet(archivo, columns=columnas)
 
         # Renombrar ratecode_id a id_tarifa para que coincida con el DDL
-        # df = df.rename(columns={"ratecode_id": "id_tarifa"})
+        df = df.rename(columns={"ratecode_id": "id_tarifa"})
 
         # Convertir FK a entero
         cols_entero = [
             "tiempo_id", "zona_pickup_id", "zona_dropoff_id",
-            "id_metodo_pago", "proveedor_id", "ratecode_id",
+            "id_metodo_pago", "proveedor_id", "id_tarifa",
             "passenger_count"
         ]
         for col in cols_entero:
@@ -185,6 +218,7 @@ if __name__ == "__main__":
     print("=" * 60)
 
     verificar_conexion()
+    ejecutar_ddl()  
     limpiar_tablas()
 
     # Cargar dimensiones (orden importa por las FK)
@@ -205,8 +239,8 @@ if __name__ == "__main__":
         "id_metodo_pago", "payment_type", "payment_descripcion"
     ])
     cargar_dimension("dim_tarifa_pago", "dim_tarifa_pago", [
-    "ratecode_id", "ratecode_descripcion"
-])
+    "id_tarifa", "ratecode_id", "ratecode_descripcion"
+    ])
 
     # Cargar fact_viajes mes por mes
     print("\n[FASE 2] Cargando fact_viajes (mes por mes)...")
@@ -218,3 +252,6 @@ if __name__ == "__main__":
     print("\n" + "=" * 60)
     print("Carga completa. Siguiente paso: conectar Power BI / Tableau")
     print("=" * 60)
+
+
+    

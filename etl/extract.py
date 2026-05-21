@@ -1,5 +1,6 @@
 import time
 import requests
+import sys
 from tqdm import tqdm
 from pathlib import Path
 
@@ -27,12 +28,19 @@ def descargar_mes(mes):
     try:
         r = requests.get(url, stream=True, timeout=TIMEOUT)
         r.raise_for_status()
-    except requests.HTTPError:
-        print(f"[SKIP] Mes {mes:02d} no disponible en TLC.")
-        return None
-    except requests.ConnectionError as e:
-        print(f"[ERROR] Sin conexion: {e}")
-        raise
+    except requests.exceptions.HTTPError:
+        print(f"[ERROR] Mes {mes:02d} no disponible en TLC.")
+        print(f"[SKIP] Proceso finalizado, por favor intente más tarde.")
+        limpiar_staging()
+        sys.exit(1)
+    except requests.exceptions.ConnectionError:
+        print(f"[ERROR] Sin conexión: no se pudo resolver el host. Verifique su conexión a internet.")
+        limpiar_staging()
+        sys.exit(1)
+    except requests.exceptions.Timeout:
+        print(f"[ERROR] Tiempo de espera agotado al descargar el mes {mes:02d}.")
+        limpiar_staging()   
+        sys.exit(1)
 
     total_bytes = int(r.headers.get("content-length", 0))
     t0 = time.perf_counter()
@@ -61,9 +69,19 @@ def descargar_zona():
     try:
         r = requests.get(url, stream=True, timeout=TIMEOUT)
         r.raise_for_status()
-    except requests.ConnectionError as e:
-        print(f"[ERROR] Sin conexion: {e}")
-        raise
+    except requests.exceptions.HTTPError:
+        print(f"[ERROR] Zonas no disponibles en TLC.")
+        print(f"[SKIP] Proceso finalizado, por favor intente más tarde.")
+        limpiar_staging()
+        sys.exit(1)
+    except requests.exceptions.ConnectionError:
+        print(f"[ERROR] Sin conexión: no se pudo resolver el host. Verifique su conexión a internet.")
+        limpiar_staging()
+        sys.exit(1)
+    except requests.exceptions.Timeout:
+        print(f"[ERROR] Tiempo de espera agotado al descargar zonas.")
+        limpiar_staging()
+        sys.exit(1)
     
     total_bytes = int(r.headers.get("content-length", 0))
     t0 = time.perf_counter()
@@ -81,6 +99,24 @@ def descargar_zona():
     print(f"[OK] {destino.name}: {size_mb:.1f} MB en {elapsed:.1f}s")
 
     return destino
+
+# Limpieza ─────────────────────────────────────────────────────────────────
+def limpiar_staging():
+    """Elimina todos los .parquet generados en OUTPUT antes de salir."""
+
+    archivos = list(OUTPUT.glob("*.parquet"))
+    if not archivos:
+        return
+    print("\n[LIMPIEZA] Eliminando archivos parciales en staging...")
+
+    for archivo in archivos:
+        try:
+            archivo.unlink()
+            print(f"  [DEL] {archivo.name}")
+        except OSError as e:
+            print(f"  [WARN] No se pudo eliminar {archivo.name}: {e}")
+    
+    print("[LIMPIEZA] Staging limpio.")
 
 
 if __name__ == "__main__":

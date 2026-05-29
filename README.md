@@ -137,6 +137,11 @@ cd proyecto-BDII
 
 Desde dentro de la carpeta `proyecto-BDII` ejecutar:
 
+**Windows:** Si `pip` no se reconoce como comando, usar:
+```bash
+py -m pip
+```
+
 ```powershell
 pip install -r requirements.txt --only-binary=:all:
 ```
@@ -182,6 +187,11 @@ Debe aparecer una línea con `bdii_postgres` y estado `Up`. Si no aparece, verif
 ### 4. Ejecutar el pipeline ETL
 
 Ejecutar los tres scripts en orden desde dentro de la carpeta `proyecto-BDII`:
+
+**Windows:** Si aparece _"Python was not found"_, usar `py` en lugar de `python`:
+```bash
+py
+```
 
 ```powershell
 python etl/extract.py

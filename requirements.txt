@@ -16,3 +16,4 @@ python-dotenv==1.2.2
  
 # Descarga automatizada de archivos (extract.py)
 requests==2.34.0
+tqdm==4.67.3

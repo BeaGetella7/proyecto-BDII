@@ -525,6 +525,6 @@ Los siguientes problemas fueron identificados en `dataset_profile.md` y resuelto
 - Transform: ~5 minutos por mes procesando en lotes
 - Load: ~3.6 minutos por mes con lotes de 100,000 filas via COPY de PostgreSQL
 
-**Total de filas cargadas:** 35,721,060 registros en fact_viajes — nivel EXCELENTE según la rúbrica del proyecto (más de 20,000,000 registros).
+**Total de filas cargadas:** 35,721,060 registros en fact_viajes
 
 ---

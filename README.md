@@ -42,7 +42,7 @@ Compara el rendimiento operativo entre proveedores. Usa `dim_proveedor` y `fact_
 
 ---
 
-## Arquitectura del Sistema
+## Flujo del Sistema
 
 ```
 Fuente (Parquet)
